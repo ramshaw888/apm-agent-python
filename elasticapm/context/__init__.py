@@ -64,3 +64,10 @@ def threading_local_monkey_patched():
             return True
 
     return False
+
+
+process_execution_context = init_execution_context()
+
+
+def get_execution_context():
+    return process_execution_context

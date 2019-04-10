@@ -37,7 +37,7 @@ import timeit
 
 from elasticapm.conf import constants
 from elasticapm.conf.constants import SPAN, TRANSACTION
-from elasticapm.context import init_execution_context
+from elasticapm.context import get_execution_context
 from elasticapm.utils import compat, encoding, get_name_from_func
 from elasticapm.utils.disttracing import TraceParent, TracingOptions
 
@@ -50,9 +50,6 @@ _time_func = timeit.default_timer
 
 
 TAG_RE = re.compile('[.*"]')
-
-
-execution_context = init_execution_context()
 
 
 class Transaction(object):
@@ -77,6 +74,7 @@ class Transaction(object):
         self.duration = _time_func() - self.start_time
 
     def _begin_span(self, name, span_type, context=None, leaf=False, tags=None, parent_span_id=None):
+        execution_context = get_execution_context()
         parent_span = execution_context.get_span()
         tracer = self._tracer
         if parent_span and parent_span.leaf:
@@ -114,6 +112,7 @@ class Transaction(object):
         return self._begin_span(name, span_type, context=context, leaf=leaf, tags=tags, parent_span_id=None)
 
     def end_span(self, skip_frames=0):
+        execution_context = get_execution_context()
         span = execution_context.get_span()
         if span is None:
             raise LookupError()
@@ -308,6 +307,7 @@ class Tracer(object):
                 transaction.id,
                 TracingOptions(recorded=is_sampled),
             )
+        execution_context = get_execution_context()
         execution_context.set_transaction(transaction)
         return transaction
 
@@ -318,6 +318,7 @@ class Tracer(object):
         return False
 
     def end_transaction(self, result=None, transaction_name=None):
+        execution_context = get_execution_context()
         transaction = execution_context.get_transaction(clear=True)
         if transaction:
             transaction.end_transaction()
@@ -351,11 +352,13 @@ class capture_span(object):
         return decorated
 
     def __enter__(self):
+        execution_context = get_execution_context()
         transaction = execution_context.get_transaction()
         if transaction and transaction.is_sampled:
             return transaction.begin_span(self.name, self.type, context=self.extra, leaf=self.leaf, tags=self.tags)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        execution_context = get_execution_context()
         transaction = execution_context.get_transaction()
         if transaction and transaction.is_sampled:
             try:
@@ -368,6 +371,7 @@ def tag(**tags):
     """
     Tags current transaction. Both key and value of the tag should be strings.
     """
+    execution_context = get_execution_context()
     transaction = execution_context.get_transaction()
     if not transaction:
         error_logger.warning("Ignored tags %s. No transaction currently active.", ", ".join(tags.keys()))
@@ -376,6 +380,7 @@ def tag(**tags):
 
 
 def set_transaction_name(name, override=True):
+    execution_context = get_execution_context()
     transaction = execution_context.get_transaction()
     if not transaction:
         return
@@ -384,6 +389,7 @@ def set_transaction_name(name, override=True):
 
 
 def set_transaction_result(result, override=True):
+    execution_context = get_execution_context()
     transaction = execution_context.get_transaction()
     if not transaction:
         return
@@ -392,6 +398,7 @@ def set_transaction_result(result, override=True):
 
 
 def set_context(data, key="custom"):
+    execution_context = get_execution_context()
     transaction = execution_context.get_transaction()
     if not transaction:
         return

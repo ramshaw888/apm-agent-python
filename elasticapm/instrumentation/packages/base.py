@@ -32,7 +32,7 @@ import functools
 import logging
 import os
 
-from elasticapm.traces import execution_context
+from elasticapm.context import get_execution_context
 from elasticapm.utils import wrapt
 
 logger = logging.getLogger("elasticapm.instrument")
@@ -131,6 +131,7 @@ class AbstractInstrumentedModule(object):
         self.originals = {}
 
     def call_if_sampling(self, module, method, wrapped, instance, args, kwargs):
+        execution_context = get_execution_context()
         transaction = execution_context.get_transaction()
         if not transaction:
             return wrapped(*args, **kwargs)

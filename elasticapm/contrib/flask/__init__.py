@@ -40,9 +40,9 @@ import elasticapm
 import elasticapm.instrumentation.control
 from elasticapm.base import Client
 from elasticapm.conf import constants, setup_logging
+from elasticapm.context import get_execution_context
 from elasticapm.contrib.flask.utils import get_data_from_request, get_data_from_response
 from elasticapm.handlers.logging import LoggingHandler
-from elasticapm.traces import execution_context
 from elasticapm.utils import build_name_with_http_method_prefix
 from elasticapm.utils.disttracing import TraceParent
 
@@ -128,7 +128,7 @@ class ElasticAPM(object):
             self.client = make_client(self.client_cls, app, **defaults)
 
         # 0 is a valid log level (NOTSET), so we need to check explicitly for it
-        if self.logging or self.logging is 0:
+        if self.logging or self.logging == 0:
             if self.logging is not True:
                 kwargs = {"level": self.logging}
             else:
@@ -164,6 +164,7 @@ class ElasticAPM(object):
             """
             Adds APM related IDs to the context used for correlating the backend transaction with the RUM transaction
             """
+            execution_context = get_execution_context()
             transaction = execution_context.get_transaction()
             if transaction and transaction.trace_parent:
                 return {

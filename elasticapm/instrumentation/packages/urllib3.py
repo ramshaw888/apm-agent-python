@@ -29,8 +29,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from elasticapm.conf import constants
+from elasticapm.context import get_execution_context
 from elasticapm.instrumentation.packages.base import AbstractInstrumentedModule
-from elasticapm.traces import DroppedSpan, capture_span, execution_context
+from elasticapm.traces import DroppedSpan, capture_span
 from elasticapm.utils import default_ports
 from elasticapm.utils.disttracing import TracingOptions
 
@@ -71,6 +72,7 @@ class Urllib3Instrumentation(AbstractInstrumentedModule):
         signature = method.upper() + " " + host
 
         url = instance.scheme + "://" + host + url
+        execution_context = get_execution_context()
         transaction = execution_context.get_transaction()
 
         with capture_span(signature, "ext.http.urllib3", {"http": {"url": url}}, leaf=True) as span:

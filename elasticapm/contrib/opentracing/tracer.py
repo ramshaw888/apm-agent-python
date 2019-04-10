@@ -36,8 +36,9 @@ from opentracing.tracer import ReferenceType
 from opentracing.tracer import Tracer as TracerBase
 
 import elasticapm
-from elasticapm import instrument, traces
+from elasticapm import instrument
 from elasticapm.conf import constants
+from elasticapm.context import get_execution_context
 from elasticapm.contrib.opentracing.span import OTSpan, OTSpanContext
 from elasticapm.utils import compat, disttracing
 
@@ -88,7 +89,9 @@ class Tracer(TracerBase):
             parent_context = references[0].referenced_context
         else:
             parent_context = None
-        transaction = traces.execution_context.get_transaction()
+
+        execution_context = get_execution_context()
+        transaction = execution_context.get_transaction()
         if not transaction:
             trace_parent = parent_context.trace_parent if parent_context else None
             transaction = self._agent.begin_transaction("custom", trace_parent=trace_parent)

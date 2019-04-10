@@ -29,10 +29,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from elasticapm.traces import execution_context
+from elasticapm.context import get_execution_context
 
 
 def rum_tracing(request):
+    execution_context = get_execution_context()
     transaction = execution_context.get_transaction()
     if transaction and transaction.trace_parent:
         return {
