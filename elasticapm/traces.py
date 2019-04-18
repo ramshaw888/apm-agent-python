@@ -62,6 +62,7 @@ class Transaction(object):
         self.result = None
         self.transaction_type = transaction_type
         self._tracer = tracer
+        self._queue_func = tracer.queue_func
 
         self.dropped_spans = 0
         self.context = {}
@@ -127,7 +128,7 @@ class Transaction(object):
         else:
             span.frames = None
         execution_context.set_span(span.parent)
-        self._tracer.queue_func(SPAN, span.to_dict())
+        self._queue_func(SPAN, span.to_dict())
         return span
 
     def ensure_parent_id(self):
@@ -173,6 +174,30 @@ class Transaction(object):
         if self.is_sampled:
             result["context"] = self.context
         return result
+
+
+class GreenTransaction(Transaction):
+    def __init__(self, transaction, queue_func):
+        self._transaction = transaction
+        super(GreenTransaction, self).__init__(transaction._tracer)
+        self.id = transaction.id
+        self.green_span = Span(
+            transaction=transaction,
+            name="green_span",
+            span_type="greenlet",
+            context=None,
+            leaf=None,
+            tags=None,
+            parent_span_id=None,
+        )
+
+        self._queue_func = queue_func
+        self.trace_parent = transaction.trace_parent
+
+    def _begin_span(self, name, span_type, context=None, leaf=False, tags=None, parent_span_id=None):
+        super(GreenTransaction, self)._begin_span(
+            name, span_type, context=context, leaf=leaf, tags=tags, parent_span_id=self.green_span.id
+        )
 
 
 class Span(object):

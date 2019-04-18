@@ -209,11 +209,7 @@ class ElasticAPM(object):
 
             # Instead of calling end_transaction here, we defer the call until the response is closed.
             # This ensures that we capture things that happen until the WSGI server closes the response.
-
-            def end_transaction():
-                self.client.end_transaction()
-
-            response.call_on_close(end_transaction)
+            response.call_on_close(self.client.end_transaction)
 
     def capture_exception(self, *args, **kwargs):
         assert self.client, "capture_exception called before application configured"
