@@ -29,14 +29,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-try:
-    import flask
-except ImportError:
-    has_flask = False
-else:
-    has_flask = True
-
-
 def init_execution_context():
     # If _threading_local has been monkeypatched (by gevent or eventlet), then
     # we should assume it's use as this will be the most "green-thread safe"
@@ -78,13 +70,4 @@ process_execution_context = init_execution_context()
 
 
 def get_execution_context():
-    if has_flask:
-        current_req = flask.request
-        if current_req:
-            if not hasattr(current_req, "execution_context"):
-                from elasticapm.context.local import LocalContext
-
-                current_req.execution_context = LocalContext()
-            return current_req.execution_context
-
     return process_execution_context

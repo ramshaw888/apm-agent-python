@@ -206,25 +206,12 @@ class ElasticAPM(object):
                 result = response.status
             elasticapm.set_transaction_name(rule, override=False)
             elasticapm.set_transaction_result(result, override=False)
+
             # Instead of calling end_transaction here, we defer the call until the response is closed.
             # This ensures that we capture things that happen until the WSGI server closes the response.
 
-            execution_context = get_execution_context()
-            transaction = execution_context.get_transaction(clear=True)
-
             def end_transaction():
-                if transaction:
-                    transaction.end_transaction()
-                    if transaction.name is None:
-                        transaction.name = ""
-                    if self.client.tracer._should_ignore(transaction.name):
-                        return
-                    if transaction.result is None:
-                        transaction.result = ""
-                    from elasticapm.conf.constants import TRANSACTION
-
-                    self.client.tracer.queue_func(TRANSACTION, transaction.to_dict())
-                return transaction
+                self.client.end_transaction()
 
             response.call_on_close(end_transaction)
 
