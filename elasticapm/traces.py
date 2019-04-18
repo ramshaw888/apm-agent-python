@@ -176,30 +176,6 @@ class Transaction(object):
         return result
 
 
-class GreenTransaction(Transaction):
-    def __init__(self, transaction, queue_func):
-        self._transaction = transaction
-        super(GreenTransaction, self).__init__(transaction._tracer)
-        self.id = transaction.id
-        self.green_span = Span(
-            transaction=transaction,
-            name="green_span",
-            span_type="greenlet",
-            context=None,
-            leaf=None,
-            tags=None,
-            parent_span_id=None,
-        )
-
-        self._queue_func = queue_func
-        self.trace_parent = transaction.trace_parent
-
-    def _begin_span(self, name, span_type, context=None, leaf=False, tags=None, parent_span_id=None):
-        super(GreenTransaction, self)._begin_span(
-            name, span_type, context=context, leaf=leaf, tags=tags, parent_span_id=self.green_span.id
-        )
-
-
 class Span(object):
     __slots__ = (
         "id",
