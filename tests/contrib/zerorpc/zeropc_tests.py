@@ -36,9 +36,10 @@ import tempfile
 
 import pytest
 
+# zerorpc = pytest.importorskip("zerorpc")
+import zerorpc
 from elasticapm.contrib.zerorpc import Middleware
 
-zerorpc = pytest.importorskip("zerorpc")
 gevent = pytest.importorskip("gevent")
 
 
